@@ -99,3 +99,11 @@ make build
 # build docker image
 make docker-build
 ```
+
+## System Design
+
+### Time Complexity
+
+- AddSinglePersonAndMatch: O(n log n) - Inserting a new user into the data structure takes O(1) time, and finding compatible people take O(n). Sorting the people can take O(k log k) time. Create matches take O(k) time, where k is the number of matches made.
+- RemoveSinglePerson: O(1) - Finding by ID to remove a user from the data structure takes O(1) time.
+- QuerySinglePeople: O(n log n) - convert map to slice takes O(n) time. Sorting the people can take O(n log n) time. Selecting the top N matches takes O(1) time.
