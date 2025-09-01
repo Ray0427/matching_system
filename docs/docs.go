@@ -266,8 +266,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is a matching system API server with in-memory storage",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
