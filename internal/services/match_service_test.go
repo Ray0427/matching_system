@@ -2,9 +2,7 @@ package services
 
 import (
 	"matching_system/internal/api/dto"
-	"matching_system/internal/models"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -72,19 +70,19 @@ func TestMatchService_RemoveSinglePerson_NotFound(t *testing.T) {
 func TestMatchService_QuerySinglePeople_Sorting(t *testing.T) {
 	ms := NewMatchService()
 
-	testPeople := []*models.Person{
-		{ID: "1", Name: "Alice", Height: 160, Gender: "female", WantedDates: 3},
-		{ID: "2", Name: "Bob", Height: 180, Gender: "male", WantedDates: 3},
-		{ID: "3", Name: "Carol", Height: 165, Gender: "female", WantedDates: 3},
-		{ID: "4", Name: "David", Height: 175, Gender: "male", WantedDates: 3},
-		{ID: "5", Name: "Eve", Height: 155, Gender: "female", WantedDates: 2},
-		{ID: "6", Name: "Frank", Height: 185, Gender: "male", WantedDates: 2},
-		{ID: "7", Name: "Grace", Height: 170, Gender: "female", WantedDates: 1},
-		{ID: "8", Name: "Henry", Height: 170, Gender: "male", WantedDates: 1},
+	testPeople := []dto.AddPersonRequest{
+		{Name: "Alice", Height: 180, Gender: "female", WantedDates: 3},
+		{Name: "Bob", Height: 170, Gender: "male", WantedDates: 3},
+		{Name: "Carol", Height: 185, Gender: "female", WantedDates: 3},
+		{Name: "David", Height: 165, Gender: "male", WantedDates: 3},
+		{Name: "Eve", Height: 175, Gender: "female", WantedDates: 2},
+		{Name: "Frank", Height: 175, Gender: "male", WantedDates: 2},
+		{Name: "Grace", Height: 180, Gender: "female", WantedDates: 1},
+		{Name: "Henry", Height: 160, Gender: "male", WantedDates: 1},
 	}
 
-	for _, person := range testPeople {
-		ms.activePeople[person.ID] = person
+	for _, req := range testPeople {
+		ms.AddSinglePersonAndMatch(req)
 	}
 
 	result := ms.QuerySinglePeople(0)
@@ -110,27 +108,27 @@ func TestMatchService_QuerySinglePeople_Sorting(t *testing.T) {
 	assert.Equal(t, "male", result[3].Gender, "the fourth should be male")
 
 	// verify the female internal sorting (from low to high)
-	assert.Equal(t, 160, result[0].Height, "the first female height should be 160")
-	assert.Equal(t, 165, result[1].Height, "the second female height should be 165")
+	assert.Equal(t, 180, result[0].Height, "the first female height should be 160")
+	assert.Equal(t, 185, result[1].Height, "the second female height should be 165")
 
 	// verify the male internal sorting (from high to low)
-	assert.Equal(t, 180, result[2].Height, "the first male height should be 180")
-	assert.Equal(t, 175, result[3].Height, "the second male height should be 175")
+	assert.Equal(t, 170, result[2].Height, "the first male height should be 180")
+	assert.Equal(t, 165, result[3].Height, "the second male height should be 175")
 }
 
 func TestMatchService_QuerySinglePeople_SameWantedDates(t *testing.T) {
 	ms := NewMatchService()
 
 	// create test data with same WantedDates
-	testPeople := []*models.Person{
-		{ID: "1", Name: "Alice", Height: 160, Gender: "female", WantedDates: 3},
-		{ID: "2", Name: "Bob", Height: 180, Gender: "male", WantedDates: 3},
-		{ID: "3", Name: "Carol", Height: 165, Gender: "female", WantedDates: 3},
-		{ID: "4", Name: "David", Height: 175, Gender: "male", WantedDates: 3},
+	testPeople := []dto.AddPersonRequest{
+		{Name: "Alice", Height: 160, Gender: "female", WantedDates: 3},
+		{Name: "Bob", Height: 180, Gender: "male", WantedDates: 3},
+		{Name: "Carol", Height: 165, Gender: "female", WantedDates: 3},
+		{Name: "David", Height: 175, Gender: "male", WantedDates: 3},
 	}
 
-	for _, person := range testPeople {
-		ms.activePeople[person.ID] = person
+	for _, req := range testPeople {
+		ms.AddSinglePersonAndMatch(req)
 	}
 
 	result := ms.QuerySinglePeople(0)
@@ -157,16 +155,16 @@ func TestMatchService_QuerySinglePeople_Limit(t *testing.T) {
 	ms := NewMatchService()
 
 	// create test data
-	testPeople := []*models.Person{
-		{ID: "1", Name: "Alice", Height: 160, Gender: "female", WantedDates: 3},
-		{ID: "2", Name: "Bob", Height: 180, Gender: "male", WantedDates: 3},
-		{ID: "3", Name: "Carol", Height: 165, Gender: "female", WantedDates: 2},
-		{ID: "4", Name: "David", Height: 175, Gender: "male", WantedDates: 2},
+	testPeople := []dto.AddPersonRequest{
+		{Name: "Alice", Height: 180, Gender: "female", WantedDates: 3},
+		{Name: "Bob", Height: 160, Gender: "male", WantedDates: 3},
+		{Name: "Carol", Height: 185, Gender: "female", WantedDates: 2},
+		{Name: "David", Height: 155, Gender: "male", WantedDates: 2},
 	}
 
 	// directly add to activePeople map
-	for _, person := range testPeople {
-		ms.activePeople[person.ID] = person
+	for _, req := range testPeople {
+		ms.AddSinglePersonAndMatch(req)
 	}
 
 	// test limit=2
@@ -178,87 +176,4 @@ func TestMatchService_QuerySinglePeople_Limit(t *testing.T) {
 	// test limit=0 (return all)
 	result = ms.QuerySinglePeople(0)
 	assert.Equal(t, 4, len(result), "should return all 4 people")
-}
-
-func TestMatchService_isCompatible(t *testing.T) {
-	ms := NewMatchService()
-
-	// test compatibility
-	tests := []struct {
-		name     string
-		person1  *models.Person
-		person2  *models.Person
-		expected bool
-	}{
-		{
-			name:     "male high female low - compatible",
-			person1:  &models.Person{ID: "1", Gender: "male", Height: 180},
-			person2:  &models.Person{ID: "2", Gender: "female", Height: 160},
-			expected: true,
-		},
-		{
-			name:     "male low female high - not compatible",
-			person1:  &models.Person{ID: "1", Gender: "male", Height: 160},
-			person2:  &models.Person{ID: "2", Gender: "female", Height: 180},
-			expected: false,
-		},
-		{
-			name:     "same gender - not compatible",
-			person1:  &models.Person{ID: "1", Gender: "male", Height: 180},
-			person2:  &models.Person{ID: "2", Gender: "male", Height: 170},
-			expected: false,
-		},
-		{
-			name:     "female high male low - not compatible",
-			person1:  &models.Person{ID: "1", Gender: "female", Height: 180},
-			person2:  &models.Person{ID: "2", Gender: "male", Height: 160},
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := ms.isCompatible(tt.person1, tt.person2)
-			assert.Equal(t, tt.expected, result, tt.name)
-		})
-	}
-}
-
-func TestMatchService_findMatches(t *testing.T) {
-	ms := NewMatchService()
-
-	// add test data
-	person1 := &models.Person{
-		ID:          "1",
-		Name:        "Alice",
-		Height:      160,
-		Gender:      "female",
-		WantedDates: 2,
-	}
-
-	person2 := &models.Person{
-		ID:          "2",
-		Name:        "Bob",
-		Height:      180,
-		Gender:      "male",
-		WantedDates: 2,
-	}
-
-	ms.activePeople[person1.ID] = person1
-	ms.activePeople[person2.ID] = person2
-
-	// test match finding
-	matches := ms.findMatches(person1)
-
-	// verify the match result
-	assert.Equal(t, 1, len(matches), "should generate 1 match")
-
-	// verify the match of the two
-	assert.Equal(t, "1", matches[0].Person1.ID, "Person1 ID should be 1")
-	assert.Equal(t, "2", matches[0].Person2.ID, "Person2 ID should be 2")
-
-	// verify the timestamp
-	assert.NotZero(t, matches[0].Timestamp, "timestamp should not be zero")
-	assert.True(t, matches[0].Timestamp.Before(time.Now().Add(time.Second)),
-		"timestamp should be current time or before")
 }

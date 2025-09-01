@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"matching_system/internal/api/dto"
 	"matching_system/internal/services"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 )
 
 type MatchHandler struct {
-	matchService *services.MatchService
+	matchService services.MatchService
 }
 
 func NewMatchHandler() *MatchHandler {
@@ -37,6 +38,7 @@ func (h *MatchHandler) AddSinglePersonAndMatch(c *gin.Context) {
 
 func (h *MatchHandler) RemoveSinglePerson(c *gin.Context) {
 	personID := c.Param("id")
+	fmt.Println("personID:", personID)
 	if personID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "person ID is required"})
 		return

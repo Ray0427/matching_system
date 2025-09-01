@@ -1,32 +1,35 @@
 package services
 
 import (
-	"encoding/json"
-	"fmt"
 	"matching_system/internal/api/dto"
 	"matching_system/internal/models"
 	"matching_system/pkg/logger"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
 
-type MatchService struct {
+type MatchService interface {
+	AddSinglePersonAndMatch(req dto.AddPersonRequest) (*models.Person, []models.Match)
+	RemoveSinglePerson(personID string) bool
+	QuerySinglePeople(limit int) []models.Person
+}
+
+type matchService struct {
 	mu           sync.RWMutex
 	activePeople map[string]*models.Person
 	logger       *logger.Logger
 }
 
-func NewMatchService() *MatchService {
-	return &MatchService{
+func NewMatchService() MatchService {
+	return &matchService{
 		activePeople: make(map[string]*models.Person),
 		logger:       logger.New(),
 	}
 }
 
-func (ms *MatchService) AddSinglePersonAndMatch(req dto.AddPersonRequest) (*models.Person, []models.Match) {
+func (ms *matchService) AddSinglePersonAndMatch(req dto.AddPersonRequest) (*models.Person, []models.Match) {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
@@ -39,15 +42,15 @@ func (ms *MatchService) AddSinglePersonAndMatch(req dto.AddPersonRequest) (*mode
 	}
 
 	ms.activePeople[person.ID] = person
-	jsonData, _ := json.MarshalIndent(ms.activePeople, "", "  ")
-	ms.logger.Info("Active people:\n" + string(jsonData))
+	// jsonData, _ := json.MarshalIndent(ms.activePeople, "", "  ")
+	// ms.logger.Info("Active people:\n" + string(jsonData))
 
 	matches := ms.findMatches(person)
 
 	return person, matches
 }
 
-func (ms *MatchService) RemoveSinglePerson(personID string) bool {
+func (ms *matchService) RemoveSinglePerson(personID string) bool {
 	ms.mu.Lock()
 	defer ms.mu.Unlock()
 
@@ -57,13 +60,13 @@ func (ms *MatchService) RemoveSinglePerson(personID string) bool {
 		return false
 	}
 
-	jsonData, _ := json.MarshalIndent(ms.activePeople, "", "  ")
-	ms.logger.Info("Active people:\n" + string(jsonData))
+	// jsonData, _ := json.MarshalIndent(ms.activePeople, "", "  ")
+	// ms.logger.Info("Active people:\n" + string(jsonData))
 
 	return true
 }
 
-func (ms *MatchService) QuerySinglePeople(limit int) []models.Person {
+func (ms *matchService) QuerySinglePeople(limit int) []models.Person {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
@@ -93,7 +96,7 @@ func (ms *MatchService) QuerySinglePeople(limit int) []models.Person {
 		}
 	})
 
-	fmt.Println("people:", people)
+	// fmt.Println("people:", people)
 	if limit > 0 && limit < len(people) {
 		people = people[:limit]
 	}
@@ -101,7 +104,7 @@ func (ms *MatchService) QuerySinglePeople(limit int) []models.Person {
 	return people
 }
 
-func (ms *MatchService) findMatches(newPerson *models.Person) []models.Match {
+func (ms *matchService) findMatches(newPerson *models.Person) []models.Match {
 	var matches []models.Match
 	var potentialMatches []*models.Person
 
@@ -131,9 +134,8 @@ func (ms *MatchService) findMatches(newPerson *models.Person) []models.Match {
 			break
 		}
 		matches = append(matches, models.Match{
-			Person1:   *newPerson,
-			Person2:   *potentialMatch,
-			Timestamp: time.Now(),
+			Person1: *newPerson,
+			Person2: *potentialMatch,
 		})
 		newPerson.WantedDates--
 		potentialMatch.WantedDates--
@@ -148,7 +150,7 @@ func (ms *MatchService) findMatches(newPerson *models.Person) []models.Match {
 	return matches
 }
 
-func (ms *MatchService) isCompatible(person1, person2 *models.Person) bool {
+func (ms *matchService) isCompatible(person1, person2 *models.Person) bool {
 	if person1.Gender == person2.Gender {
 		return false
 	}
