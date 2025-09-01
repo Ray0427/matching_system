@@ -1,0 +1,166 @@
+definitions:
+  dto.AddPersonRequest:
+    properties:
+      gender:
+        enum:
+        - male
+        - female
+        type: string
+      height:
+        maximum: 250
+        minimum: 100
+        type: integer
+      name:
+        type: string
+      wanted_dates:
+        minimum: 0
+        type: integer
+    required:
+    - gender
+    - height
+    - name
+    - wanted_dates
+    type: object
+  dto.AddPersonResponse:
+    properties:
+      matches:
+        items:
+          $ref: '#/definitions/models.Match'
+        type: array
+      message:
+        type: string
+      person:
+        $ref: '#/definitions/models.Person'
+    type: object
+  dto.QueryPeopleResponse:
+    properties:
+      message:
+        type: string
+      people:
+        items:
+          $ref: '#/definitions/models.Person'
+        type: array
+    type: object
+  dto.RemovePersonResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  models.Match:
+    properties:
+      person1:
+        $ref: '#/definitions/models.Person'
+      person2:
+        $ref: '#/definitions/models.Person'
+    type: object
+  models.Person:
+    properties:
+      gender:
+        type: string
+      height:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      wanted_dates:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a matching system API server with in-memory storage
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Matching System API
+  version: "1.0"
+paths:
+  /add-single-person-and-match:
+    post:
+      consumes:
+      - application/json
+      description: Add a single person and match
+      parameters:
+      - description: Person
+        in: body
+        name: person
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddPersonRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.AddPersonResponse'
+      summary: Add a single person and match
+      tags:
+      - match
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Get API health status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check endpoint
+      tags:
+      - health
+  /query-single-people:
+    get:
+      consumes:
+      - application/json
+      description: Query single people
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.QueryPeopleResponse'
+      summary: Query single people
+      tags:
+      - match
+  /remove-single-person/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a single person
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RemovePersonResponse'
+      summary: Remove a single person
+      tags:
+      - match
+swagger: "2.0"

@@ -4,6 +4,8 @@ import (
 	"matching_system/internal/api/handlers"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func Setup() *gin.Engine {
@@ -18,5 +20,6 @@ func Setup() *gin.Engine {
 	router.DELETE("/remove-single-person/:id", matchHandler.RemoveSinglePerson)
 	router.GET("/query-single-people", matchHandler.QuerySinglePeople)
 
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return router
 }
