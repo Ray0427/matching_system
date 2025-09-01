@@ -26,11 +26,11 @@ func (h *MatchHandler) AddSinglePersonAndMatch(c *gin.Context) {
 		return
 	}
 
-	person, matchs := h.matchService.AddSinglePersonAndMatch(req)
+	person, matches := h.matchService.AddSinglePersonAndMatch(req)
 
 	c.JSON(http.StatusCreated, dto.AddPersonResponse{
 		Person:  *person,
-		Matches: matchs,
+		Matches: matches,
 		Message: "person added successfully",
 	})
 }
@@ -65,10 +65,9 @@ func (h *MatchHandler) QuerySinglePeople(c *gin.Context) {
 		})
 		return
 	}
-	people, total := h.matchService.QuerySinglePeople(limit)
+	people := h.matchService.QuerySinglePeople(limit)
 	c.JSON(http.StatusOK, dto.QueryPeopleResponse{
 		People:  people,
-		Total:   total,
 		Message: "people queried successfully",
 	})
 }

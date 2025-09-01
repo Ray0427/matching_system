@@ -1,9 +1,11 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Match struct {
-	Person1ID string    `json:"person1Id"`
-	Person2ID string    `json:"person2Id"`
+	Person1   Person    `json:"person1"`
+	Person2   Person    `json:"person2"`
 	Timestamp time.Time `json:"timestamp"`
 }
